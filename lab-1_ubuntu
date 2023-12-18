@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Check if script is run as root
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root"
+  exit
+fi
+
+# Step 1: Edit grub file
+sed -i 's/GRUB_CMDLINE_LINUX="\(.*\)"/GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"/' /etc/default/grub
+
+# Step 2: Update grub
+update-grub
+
+# Step 3: Configure Network interface (eth0)
+cat <<EOF > /etc/network/interfaces
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto eth0
+iface eth0 inet dhcp
+EOF
+
+# Step 4: Reboot server
+init 6
+
+echo "Interface name changed from ens to eth. Please verify the changes after the reboot."
